@@ -48,7 +48,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target):
     pkgs = [pkg for _, pkg in manifest]
     name = tag_name.split('-', 1)[1]
     with open(os.path.join(target, 'SPECS', 'SciTools-taggedenv-{}.spec'.format(name)), 'w') as fh:
-        fh.write(generate.render_env(name, pkgs))
+        fh.write(generate.render_taggedenv(name, pkgs))
 
 
 def create_rpmbuild_for_env(pkgs, target):
@@ -127,6 +127,10 @@ def create_rpmbuild_content(repo, target):
 #                create_rpmbuild_for_label(env, tag, target)
             for tag in tags:
                 create_rpmbuild_for_tag(repo, tag, target)
+            for env in envs:
+                with open(os.path.join(target, 'SPECS', 'SciTools-env-{}.spec'.format(env)), 'w') as fh:
+                    fh.write(generate.render_env(env, labelled_tags[env.split('-')[-1]]))
+
 
 
 def create_rpm_installer(target, python_spec='python'):
