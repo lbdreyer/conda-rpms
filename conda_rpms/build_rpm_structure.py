@@ -80,12 +80,20 @@ def create_rpmbuild_for_tag(repo, tag_name, target):
     with open(manifest_fname, 'r') as fh:
         manifest = sorted(line.strip().split('\t') for line in fh)
 
+    spec_fname = os.path.join(repo.working_dir, 'env.spec')
+    if not os.path.exists(spec_fname):
+        raise ValueError("The tag '{}' doesn't have an environment specification.".format(tag_name))
+    with open(spec_fname, 'r') as fh:
+        for line in fh:
+            if line.startswith('env'):
+                spec = [line.strip()[2:] for line in fh if line.startswith(' -')]
+
     create_rpmbuild_for_env(manifest, target)
 
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
     with open(os.path.join(target, 'SPECS', 'SciTools-env-{}-tag-{}.spec'.format(env_name, tag)), 'w') as fh:
-        fh.write(generate.render_taggedenv(env_name, tag, pkgs))
+        fh.write(generate.render_taggedenv(env_name, tag, pkgs, spec))
 
 
 def create_rpmbuild_content(repo, target):

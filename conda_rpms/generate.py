@@ -42,13 +42,13 @@ def render_dist_spec(dist):
     return pkg_spec_tmpl.render(pkginfo=pkginfo, meta=meta, rpm_prefix='SciTools', install_prefix='/opt/scitools')
 
 
-def render_taggedenv(env_name, tag, pkgs):
+def render_taggedenv(env_name, tag, pkgs, spec):
     env_info = {'url': 'http://link/to/gh',
                 'name': env_name,
                 'tag': tag,
                 'summary': 'An environment in which to rejoice.',
                 'version': '1',
-                'spec': '\n'.join(['udunits2 < 2.21', 'python 2.*'])}
+                'spec': '\n'.join(spec)}
     return taggedenv_spec_tmpl.render(install_prefix='/opt/scitools', pkgs=pkgs, rpm_prefix='SciTools', env=env_info)
 
 
