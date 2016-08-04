@@ -133,7 +133,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
     with open(spec_fname, 'r') as fh:
         env_spec = yaml.safe_load(fh).get('env', [])
 
-    create_rpmbuild_for_env(manifest, target)
+    create_rpmbuild_for_env(manifest, target, config)
 
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
