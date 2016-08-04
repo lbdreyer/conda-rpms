@@ -11,6 +11,8 @@ import os
 import time
 import shutil
 
+import yaml
+
 from git import Repo
 import conda.api
 import conda.fetch
@@ -84,16 +86,14 @@ def create_rpmbuild_for_tag(repo, tag_name, target):
     if not os.path.exists(spec_fname):
         raise ValueError("The tag '{}' doesn't have an environment specification.".format(tag_name))
     with open(spec_fname, 'r') as fh:
-        for line in fh:
-            if line.startswith('env'):
-                spec = [line.strip()[2:] for line in fh if line.startswith(' -')]
+        env_spec = yaml.safe_load(fh).get('env', [])
 
     create_rpmbuild_for_env(manifest, target)
 
     pkgs = [pkg for _, pkg in manifest]
     env_name, tag = tag_name.split('-')[1:]
     with open(os.path.join(target, 'SPECS', 'SciTools-env-{}-tag-{}.spec'.format(env_name, tag)), 'w') as fh:
-        fh.write(generate.render_taggedenv(env_name, tag, pkgs, spec))
+        fh.write(generate.render_taggedenv(env_name, tag, pkgs, env_spec))
 
 
 def create_rpmbuild_content(repo, target):
