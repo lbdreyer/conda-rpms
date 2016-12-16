@@ -49,17 +49,19 @@ def render_dist_spec(dist, config):
                                 rpm_prefix=rpm_prefix,
                                 install_prefix=install_prefix)
 
-def render_env(branch_name, label, repo, config, tag, commit_num):
-    env_info = {'url': 'http://link/to/gh',
-                'name': branch_name,
-		'label' : label,
-                'summary': 'A SciTools environment.',
-                'version': commit_num,}
+
+def render_env(branch_name, label, config, tag, commit_num):
     install_prefix = config['install']['prefix']
     rpm_prefix = config['rpm']['prefix']
+    env_info = {'url': 'http://link/to/gh',
+                'name': branch_name,
+                'label' : label,
+                'summary': 'A {} environment.'.format(rpm_prefix),
+                'version': commit_num,}
+    tag_name, = tag.split('-', 2)[2:]
     return env_spec_tmpl.render(install_prefix=install_prefix,
                                 rpm_prefix=rpm_prefix, env=env_info,
-                                labelled_tag=tag.split('-')[-1])
+                                labelled_tag=tag_name)
 
 
 def render_taggedenv(env_name, tag, pkgs, config, env_spec):
