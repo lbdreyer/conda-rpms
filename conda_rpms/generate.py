@@ -58,6 +58,9 @@ def render_env(branch_name, label, config, tag, commit_num):
                 'label' : label,
                 'summary': 'A {} environment.'.format(rpm_prefix),
                 'version': commit_num,}
+    # When multiple tags are produced in a day, they have an associated count
+    # addded to the end e.g. env-default-2016_12_05-2, which needs to be parsed
+    # correctly.
     tag_name, = tag.split('-', 2)[2:]
     return env_spec_tmpl.render(install_prefix=install_prefix,
                                 rpm_prefix=rpm_prefix, env=env_info,
