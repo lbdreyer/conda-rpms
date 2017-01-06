@@ -12,8 +12,9 @@ env_spec_tmpl = env.get_template('env.spec.template')
 taggedenv_spec_tmpl = env.get_template('taggedenv.spec.template')
 installer_spec_tmpl = env.get_template('installer.spec.template')
 
-import tarfile
 import json
+import re
+import tarfile
 import yaml
 
 
@@ -55,13 +56,19 @@ def render_env(branch_name, label, config, tag, commit_num):
     rpm_prefix = config['rpm']['prefix']
     env_info = {'url': 'http://link/to/gh',
                 'name': branch_name,
-                'label' : label,
+                'label': label,
                 'summary': 'A {} environment.'.format(rpm_prefix),
                 'version': commit_num,}
     # When multiple tags are produced in a day, they have an associated count
     # addded to the end e.g. env-default-2016_12_05-2, which needs to be parsed
     # correctly.
-    tag_name, = tag.split('-', 2)[2:]
+    tag_pattern = re.compile('env\-[a-zA-Z]+\-([0-9\_\-]+)')
+    try:
+        tag_name, = tag_pattern.match(tag).groups()
+    except AttributeError:
+        msg = "Cannot create an environment for the tag {}. The name of the " \
+              "tag must follow the format 'env-<environment name>-<env tag>"
+        raise ValueError(msg.format(tag))
     return env_spec_tmpl.render(install_prefix=install_prefix,
                                 rpm_prefix=rpm_prefix, env=env_info,
                                 labelled_tag=tag_name)

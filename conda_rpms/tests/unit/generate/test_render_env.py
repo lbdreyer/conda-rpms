@@ -22,6 +22,10 @@ class Test_tag(unittest.TestCase):
         self.check(tag='env-default-2016_12_15-2',
                    expected=['Requires: Tools-env-default-tag-2016_12_15-2'])
 
+    def test_bad_tag(self):
+        msg = "Cannot create an environment for the tag"
+        with self.assertRaisesRegexp(ValueError, msg):
+            self.check(tag='env-defa-ult-2016_12_15-2', expected=None)
 
 if __name__ == '__main__':
     unittest.main()
