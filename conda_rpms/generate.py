@@ -17,6 +17,9 @@ import re
 import tarfile
 import yaml
 
+TAG_PATTERN = '^env-\w+-(\d{4}_\d{2}_\d{2}(-\d+)?)$'
+tag_pattern = re.compile(TAG_PATTERN)
+
 
 def render_dist_spec(dist, config):
     with tarfile.open(dist, 'r:bz2') as tar:
@@ -62,12 +65,13 @@ def render_env(branch_name, label, config, tag, commit_num):
     # When multiple tags are produced in a day, they have an associated count
     # addded to the end e.g. env-default-2016_12_05-2, which needs to be parsed
     # correctly.
-    tag_pattern = re.compile('env\-[a-zA-Z]+\-([0-9\_\-]+)')
+    match = tag_pattern.match(tag)
     try:
-        tag_name, = tag_pattern.match(tag).groups()
+        tag_name = match.group(1)
     except AttributeError:
         msg = "Cannot create an environment for the tag {}. The name of the " \
-              "tag must follow the format 'env-<environment name>-<env tag>"
+              "tag must follow the format " \
+              "'env-<environment name>-YYYY-MM-DD(-<count> (optional))'"
         raise ValueError(msg.format(tag))
     return env_spec_tmpl.render(install_prefix=install_prefix,
                                 rpm_prefix=rpm_prefix, env=env_info,
