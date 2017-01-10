@@ -66,13 +66,12 @@ def render_env(branch_name, label, config, tag, commit_num):
     # addded to the end e.g. env-default-2016_12_05-2, which needs to be parsed
     # correctly.
     match = tag_pattern.match(tag)
-    try:
-        tag_name = match.group(1)
-    except AttributeError:
+    if match is None:
         msg = "Cannot create an environment for the tag {}. The name of the " \
               "tag must follow the format " \
               "'env-<environment name>-YYYY-MM-DD(-<count> (optional))'"
         raise ValueError(msg.format(tag))
+    tag_name = match.group(1)
     return env_spec_tmpl.render(install_prefix=install_prefix,
                                 rpm_prefix=rpm_prefix, env=env_info,
                                 labelled_tag=tag_name)
