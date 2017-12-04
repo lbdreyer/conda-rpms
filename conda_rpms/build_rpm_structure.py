@@ -143,7 +143,7 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
     index = conda.fetch.fetch_index(list(set([url for url, pkg in manifest])),
                                     use_cache=False)
     resolver = Resolve(index)
-    dists = ['::'.join(['/'.join(url.split('/')[:-1]), pkg]) for url, pkg in manifest]
+    dists = ['::'.join(os.path.dirname(url), pkg]) for url, pkg in manifest]
     sorted_dists = resolver.dependency_sort(dists)
     sorted_pkgs = [dist.split('::')[-1] for dist in sorted_dists]
 
