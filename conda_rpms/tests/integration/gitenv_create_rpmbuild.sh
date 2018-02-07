@@ -7,7 +7,7 @@ export INSTALL_ROOT=/opt/conda
 REPO_ROOT=$(cd "$(dirname ${0})/../../.."; pwd;)
 
 # Test conda-gitenv approach.
-cat << EOF | docker run -i \
+cat << 'EOF' | docker run -i \
                         -v ${REPO_ROOT}:/repo \
                         -a stdin -a stdout -a stderr \
                         centos:6 \
