@@ -11,11 +11,10 @@ cat << 'EOF' | docker run -i \
 
 
 export MINICONDA_DIR=${HOME}/miniconda
-echo 'something'
-echo ${MINICONDA_DIR}
+
 # Install conda
 # -------------
-yum install -y wget which rev
+yum install -y wget
 wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh --no-verbose
 bash Miniconda3-latest-Linux-x86_64.sh -b -p ${MINICONDA_DIR} && rm -f Miniconda*.sh
 
@@ -43,22 +42,22 @@ source activate test-installer
 # Run the conda_rpms installer
 # ----------------------------
 # Get the name of the noarch_package, e.g. tqdm-4.19.8-py_0
-#noarch_tqdm=$(find $MINICONDA_DIR/pkgs -type d -name "tqdm-*-py*" | rev | cut -d"/" -f1-1 | rev)
-#echo $noarch_tqdm
-python /repo/conda_rpms/install.py --pkgs-dir=$MINICONDA_DIR/pkgs --prefix=$MINICONDA_DIR/envs/test-env --link tqdm-4.19.8-py_0
+noarch_tqdm=$(basename $(find $MINICONDA_DIR/pkgs -type d -name "tqdm-*-py*"))
+echo $noarch_tqdm
+python /repo/conda_rpms/install.py --pkgs-dir=$MINICONDA_DIR/pkgs --prefix=$MINICONDA_DIR/envs/test-env --link $noarch_tqdm
 
 
 # Check that everything is there
 # ------------------------------
 source activate test-env
 
-# Check pyc files have been compiled
+echo 'Check pyc files have been compiled:'
 ls /root/miniconda/envs/test-env/lib/python3.6/site-packages/tqdm/*/*pyc
 
-# Check it imports
+echo 'Check the noarch package imports'
 python -c "import tqdm"
 
-# Check the entrypoint exists
+echo 'Check the entrypoint exists'
 which tqdm
 
 EOF
