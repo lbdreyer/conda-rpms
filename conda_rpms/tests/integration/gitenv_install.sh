@@ -11,8 +11,7 @@ cat << 'EOF' | docker run -i \
 
 
 export MINICONDA_DIR=${HOME}/miniconda
-echo 'something'
-echo ${MINICONDA_DIR}
+
 # Install conda
 # -------------
 yum install -y wget which rev
@@ -52,13 +51,13 @@ python /repo/conda_rpms/install.py --pkgs-dir=$MINICONDA_DIR/pkgs --prefix=$MINI
 # ------------------------------
 source activate test-env
 
-# Check pyc files have been compiled
+echo 'Check pyc files have been compiled:'
 ls /root/miniconda/envs/test-env/lib/python3.6/site-packages/tqdm/*/*pyc
 
-# Check it imports
+echo 'Check the noarch package imports'
 python -c "import tqdm"
 
-# Check the entrypoint exists
+echo 'Check the entrypoint exists'
 which tqdm
 
 EOF
