@@ -143,7 +143,17 @@ def create_rpmbuild_for_tag(repo, tag_name, target, config):
     index = conda.fetch.fetch_index(list(set([url for url, pkg in manifest])),
                                     use_cache=False)
     resolver = Resolve(index)
-    dists = ['::'.join(os.path.dirname(url), pkg]) for url, pkg in manifest]
+
+    # To sort the distributions must match the format of the keys of the index.
+    # For example, most should look like `http://channel::pkg
+    # However channels on anaconda go by their name rather than their url,
+    #  i.e. `conda-forge::pkg`
+    dists = []
+    for url, pkg in manifest:
+        anaconda_url = 'https://conda.anaconda.org/'
+        if url.startswith(anaconda_url):
+            url = url[len(anaconda_url):]
+        dists.append('::'.join([os.path.dirname(url), pkg]))
     sorted_dists = resolver.dependency_sort(dists)
     sorted_pkgs = [dist.split('::')[-1] for dist in sorted_dists]
 
