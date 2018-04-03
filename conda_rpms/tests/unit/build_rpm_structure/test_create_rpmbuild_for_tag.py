@@ -31,10 +31,11 @@ class Test(tests.CommonTest):
         with self.temp_dir() as target:
             with self.temp_dir() as temp_repo:
                 # Create fake env.spec and manifest files
-                with open(temp_repo + '/env.spec', 'w') as env_spec_file:
+                with open(os.path.join(temp_repo + '/env.spec'), 'w') as \
+                        env_spec_file:
                     env_spec_file.write(ENV_SPEC)
-                with open(temp_repo + '/env.manifest',
-                          'w') as env_manifest_file:
+                with open(os.path.join(temp_repo + '/env.manifest'), 'w') as \
+                        env_manifest_file:
                     env_manifest_file.write(ENV_MANIFEST)
 
                 # Set up arguments for call to create_rpmbuild_for_tag
@@ -53,8 +54,9 @@ class Test(tests.CommonTest):
                 for line in fh.readlines():
                     # Parse the lines of the spec file that are formatted as
                     # `  {INSTALL} xz-5.2.3-0\n`
-                    if line.startswith('  ${INSTALL}'):
-                        result_order.append(line.split(' ')[3][:-1])
+                    line = line.strip()
+                    if line.startswith('${INSTALL}'):
+                        result_order.append(line.split(' ')[1])
 
             expected_order = ['ca-certificates-2018.1.18-0', 'ncurses-5.9-10',
                               'tk-8.6.7-0', 'xz-5.2.3-0', 'zlib-1.2.11-0',

@@ -35,23 +35,24 @@ standalone, i.e. not import any other parts of `conda` (only depend on
 the standard library).
 '''
 
-
-import time
-import os
 import json
+import logging
+import os
+from os.path import abspath, basename, dirname, exists, isdir, isfile, islink, \
+    join, lexists, split, splitext
+import re
+import shlex
 import shutil
 import stat
 from stat import S_IMODE, S_IXGRP, S_IXOTH, S_IXUSR
-import sys
 import subprocess
+import sys
 import tarfile
 from textwrap import dedent
+import time
 import traceback
-import logging
-import re
-import shlex
-from os.path import abspath, basename, dirname, exists, isdir, isfile, islink, \
-    join, split, splitext
+import warnings
+
 
 try:
     from conda.lock import Locked
@@ -419,6 +420,13 @@ if __name__ == '__main__':
     sys.exit(%(func)s())
 """).lstrip()
 
+# three capture groups: whole_shebang, executable, options
+SHEBANG_REGEX = (br'^(#!'  # pretty much the whole match string
+                 br'(?:[ ]*)'  # allow spaces between #! and beginning of the executable path
+                 br'(/(?:\\ |[^ \n\r\t])*)'  # the executable is the next text block without an escaped space or non-space whitespace character  # NOQA
+                 br'(.*)'  # the rest of the line can contain option flags
+                 br')$')  # end whole_shebang group
+
 
 def pyc_path(py_path, python_major_minor_version):
     """
@@ -461,15 +469,22 @@ def compile_pyc(python_exe_full_path, py_full_path, pyc_full_path):
     be8c08c083f4d5e05b06bd2689d2cd0d410c2ffe.
 
     Modification included:
-        * removed check that the pyc file already exists prior to compilation
         * changed log.trace -> log.info (log.trace not supported)
 
     """
+    if os.path.lexists(pyc_full_path):
+        warnings.warn('{} already exists'.format(pyc_full_path))
     command = [python_exe_full_path, '-Wi', '-m', 'py_compile', py_full_path]
     subprocess.call(command)
 
     if not isfile(pyc_full_path):
-        log.info('{} failed to compile correctly'.format(pyc_full_path))
+        message = """
+                pyc file failed to compile successfully
+                  python_exe_full_path: %()s\n
+                  py_full_path: %()s\n
+                  pyc_full_path: %()s\n
+                """
+        log.info(message, python_exe_full_path, py_full_path, pyc_full_path)
         return None
 
     return pyc_full_path
@@ -477,7 +492,7 @@ def compile_pyc(python_exe_full_path, py_full_path, pyc_full_path):
 
 def parse_entry_point_def(ep_definition):
     """
-    Copy of conda/core.path.py:parse_entry_point_def at
+    Copy of conda/common/path.py:parse_entry_point_def at
     be8c08c083f4d5e05b06bd2689d2cd0d410c2ffe.
 
     """
@@ -513,15 +528,8 @@ def replace_long_shebang(data):
 
     Modifications included:
         * removed mode check for non-binary shebang
-        * brought `SHEBANG_REGEX` into the function
 
     """
-    # three capture groups: whole_shebang, executable, options
-    SHEBANG_REGEX = (br'^(#!'  # pretty much the whole match string
-                     br'(?:[ ]*)'  # allow spaces between #! and beginning of the executable path
-                     br'(/(?:\\ |[^ \n\r\t])*)'  # the executable is the next text block without an escaped space or non-space whitespace character  # NOQA
-                     br'(.*)'  # the rest of the line can contain option flags
-                     br')$')  # end whole_shebang group
     shebang_match = re.match(SHEBANG_REGEX, data, re.MULTILINE)
     if shebang_match:
         whole_shebang, executable, options = shebang_match.groups()
@@ -539,9 +547,14 @@ def create_python_entry_point(target_full_path, python_full_path, module, func):
     at be8c08c083f4d5e05b06bd2689d2cd0d410c2ffe.
 
     Modifications included:
-        * Removed check that the entry point already exists
+        * Modified the error for the check that the entry point already
+        exists to raise a warning rather than an error
 
     """
+
+    if os.path.lexists(target_full_path):
+        warnings.warn('Entrypoint {} already exists.'.format(target_full_path))
+
     import_name = func.split('.')[0]
     pyscript = python_entry_point_template % {
         'module': module,
@@ -558,7 +571,6 @@ def create_python_entry_point(target_full_path, python_full_path, module, func):
 
         if hasattr(shebang, 'decode'):
             shebang = shebang.decode()
-
     else:
         shebang = None
 
@@ -725,7 +737,12 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None, target_prefix=N
         index_data = json.loads(fh.read())
     if 'noarch' in index_data:
         noarch = index_data['noarch']
+    elif 'noarch_python' in index_data:
+        # `noarch_python` has been deprecated.
+        if index_data['noarch_python'] is True:
+            noarch = 'python'
 
+    if noarch:
         if on_win:
             raise ValueError('Windows is not supported.')
 
@@ -755,6 +772,8 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None, target_prefix=N
                                                          target_site_packages)
                 dst = join(prefix, noarch_f)
                 all_files.append(noarch_f)
+            # Non-noarch packages do not need special handling of the
+            # site-packages
             else:
                 dst = join(prefix, f)
                 all_files.append(f)
@@ -841,8 +860,6 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None, target_prefix=N
             meta_dict['channel'] = remove_binstar_tokens(meta_dict['channel'])
         if 'icon' in meta_dict:
             meta_dict['icondata'] = read_icondata(source_dir)
-        if noarch:
-            meta_dict['noarch'] = noarch
 
         create_meta(prefix, dist, info_dir, meta_dict)
 
