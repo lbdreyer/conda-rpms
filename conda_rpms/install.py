@@ -742,7 +742,7 @@ def link(pkgs_dir, prefix, dist, linktype=LINK_HARD, index=None, target_prefix=N
         if index_data['noarch_python'] is True:
             noarch = 'python'
 
-    if noarch:
+    if noarch == 'python':
         if on_win:
             raise ValueError('Windows is not supported.')
 
