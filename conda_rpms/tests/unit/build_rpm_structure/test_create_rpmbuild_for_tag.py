@@ -31,10 +31,10 @@ class Test(tests.CommonTest):
         with self.temp_dir() as target:
             with self.temp_dir() as temp_repo:
                 # Create fake env.spec and manifest files
-                with open(os.path.join(temp_repo + 'env.spec'), 'w') as \
+                with open(os.path.join(temp_repo, 'env.spec'), 'w') as \
                         env_spec_file:
                     env_spec_file.write(ENV_SPEC)
-                with open(os.path.join(temp_repo + 'env.manifest'), 'w') as \
+                with open(os.path.join(temp_repo, 'env.manifest'), 'w') as \
                         env_manifest_file:
                     env_manifest_file.write(ENV_MANIFEST)
 
